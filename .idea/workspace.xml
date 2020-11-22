@@ -21,9 +21,10 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0ffec7bf-8c49-47bb-bb21-ac1280263cc8" name="Default Changelist" comment="filter by extension">
+    <list default="true" id="0ffec7bf-8c49-47bb-bb21-ac1280263cc8" name="Default Changelist" comment="first working version">
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bruh.wav" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +33,13 @@
   </component>
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -54,18 +62,35 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/.." />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="settings.editor.selected.configurable" value="language.rust.cargo" />
   </component>
-  <component name="RunManager">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Code Stuff\big-fat" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Cargo.Run">
+    <configuration name="Build" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="build --release" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="channel" value="DEFAULT" />
       <option name="command" value="run --release" />
       <option name="allFeatures" value="false" />
       <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
+      <option name="backtrace" value="NO" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
       <method v="2">
@@ -77,6 +102,10 @@
         <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Cargo.Run" />
+      <item itemvalue="Cargo.Build" />
+    </list>
   </component>
   <component name="RustProjectSettings">
     <option name="compileAllTargets" value="false" />
@@ -97,7 +126,7 @@
       <updated>1605847068908</updated>
       <workItem from="1605847070671" duration="150000" />
       <workItem from="1605852012188" duration="1279000" />
-      <workItem from="1605997431488" duration="1124000" />
+      <workItem from="1605997431488" duration="16396000" />
     </task>
     <task id="LOCAL-00001" summary="init commit">
       <created>1605847110948</created>
@@ -120,7 +149,35 @@
       <option name="project" value="LOCAL" />
       <updated>1605853290127</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="filter by extension">
+      <created>1605998559138</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1605998559138</updated>
+    </task>
+    <task id="LOCAL-00005" summary="audio reader">
+      <created>1606005104010</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1606005104010</updated>
+    </task>
+    <task id="LOCAL-00006" summary="audio reader">
+      <created>1606006161700</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1606006161700</updated>
+    </task>
+    <task id="LOCAL-00007" summary="first working version">
+      <created>1606013582288</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1606013582288</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -143,29 +200,39 @@
     <MESSAGE value="init commit" />
     <MESSAGE value="da path" />
     <MESSAGE value="filter by extension" />
-    <option name="LAST_COMMIT_MESSAGE" value="filter by extension" />
+    <MESSAGE value="audio reader" />
+    <MESSAGE value="first working version" />
+    <option name="LAST_COMMIT_MESSAGE" value="first working version" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="414" y="175" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1605997622719">
+    <state x="414" y="175" width="1092" height="738" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606013354888">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="414" y="175" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605997622719" />
-    <state width="1877" height="282" key="GridCell.Tab.0.bottom" timestamp="1605998551860">
+    <state x="414" y="175" width="1092" height="738" key="#com.intellij.execution.impl.EditConfigurationsDialog/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606013354888" />
+    <state x="765" y="236" key="#com.intellij.ide.util.MemberChooser" timestamp="1606007585609">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.bottom/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605998551860" />
-    <state width="1877" height="282" key="GridCell.Tab.0.center" timestamp="1605998551860">
+    <state x="765" y="236" key="#com.intellij.ide.util.MemberChooser/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606007585609" />
+    <state width="1877" height="282" key="GridCell.Tab.0.bottom" timestamp="1606013535192">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.center/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605998551860" />
-    <state width="1877" height="282" key="GridCell.Tab.0.left" timestamp="1605998551860">
+    <state width="1877" height="282" key="GridCell.Tab.0.bottom/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606013535192" />
+    <state width="1877" height="282" key="GridCell.Tab.0.center" timestamp="1606013535192">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.left/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605998551860" />
-    <state width="1877" height="282" key="GridCell.Tab.0.right" timestamp="1605998551860">
+    <state width="1877" height="282" key="GridCell.Tab.0.center/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606013535192" />
+    <state width="1877" height="282" key="GridCell.Tab.0.left" timestamp="1606013535192">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.right/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605998551860" />
+    <state width="1877" height="282" key="GridCell.Tab.0.left/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606013535192" />
+    <state width="1877" height="282" key="GridCell.Tab.0.right" timestamp="1606013535192">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="282" key="GridCell.Tab.0.right/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606013535192" />
+    <state x="816" y="222" key="RollbackChangesDialog" timestamp="1606002300599">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="816" y="222" key="RollbackChangesDialog/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606002300599" />
     <state x="461" y="165" key="SettingsEditor" timestamp="1605847212753">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -178,9 +245,21 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="571" y="130" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605852752767" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1605853225734">
+    <state x="2042" y="0" width="1376" height="717" maximized="true" key="dock-window-1" timestamp="1606007292748">
+      <screen x="1920" y="0" width="1920" height="1040" />
+    </state>
+    <state x="2042" y="0" width="1376" height="717" maximized="true" key="dock-window-1/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606007292748" />
+    <state x="2409" y="274" width="585" height="534" key="find.popup" timestamp="1606011809436">
+      <screen x="1920" y="0" width="1920" height="1040" />
+    </state>
+    <state x="2409" y="274" width="585" height="534" key="find.popup/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606011809436" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1606009956116">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605853225734" />
+    <state x="616" y="240" key="run.anything.popup/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606009956116" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1606005917352">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1606005917352" />
   </component>
 </project>

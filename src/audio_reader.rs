@@ -1,29 +1,44 @@
+//! thingy for reading audio files
+
+use crate::{CHANNELS, SAMPLE_RATE};
+use anyhow::{ensure, Context, Result};
 use rodio::source::SamplesConverter;
 use rodio::{Decoder, Source};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-type Sample = f32;
-pub trait AudioReader: Iterator<Item = Sample> {
-    fn open(path: &Path) -> Self;
+type SampleIter = SamplesConverter<Decoder<BufReader<File>>, f32>;
+
+pub struct AudioReader {
+    sample_iter: SampleIter,
 }
 
-pub struct RodioReader {
-    samples_iter: SamplesConverter<Decoder<BufReader<File>>, Sample>,
-}
-impl AudioReader for RodioReader {
-    fn open(path: &Path) -> Self {
-        let file = File::open(path).unwrap();
+impl AudioReader {
+    pub fn open(path: &Path) -> Result<Self> {
+        let file = File::open(path).context("error opening file")?;
         let reader = BufReader::new(file);
-        let decoder = Decoder::new(reader).unwrap();
-        let samples_iter = decoder.convert_samples();
-        RodioReader { samples_iter }
+        let decoder = Decoder::new(reader).context("error constructing decoder")?;
+        let sample_iter = decoder.convert_samples();
+
+        ensure!(
+            sample_iter.channels() == CHANNELS,
+            "must have {} channels",
+            CHANNELS
+        );
+        ensure!(
+            sample_iter.sample_rate() == SAMPLE_RATE,
+            "must have sample rate of {}",
+            SAMPLE_RATE
+        );
+
+        Ok(AudioReader { sample_iter })
     }
 }
-impl Iterator for RodioReader {
-    type Item = Sample;
+
+impl Iterator for AudioReader {
+    type Item = f32;
     fn next(&mut self) -> Option<Self::Item> {
-        self.samples_iter.next()
+        self.sample_iter.next()
     }
 }
