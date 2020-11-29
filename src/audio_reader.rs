@@ -22,12 +22,12 @@ impl AudioReader {
         let sample_iter = decoder.convert_samples();
 
         ensure!(
-            sample_iter.channels() == CHANNELS as u16,
+            sample_iter.channels() == CHANNELS,
             "must have {} channels",
             CHANNELS
         );
         ensure!(
-            sample_iter.sample_rate() == SAMPLE_RATE as u32,
+            sample_iter.sample_rate() == SAMPLE_RATE,
             "must have sample rate of {}",
             SAMPLE_RATE
         );
