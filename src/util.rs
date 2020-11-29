@@ -1,7 +1,7 @@
 //! misc utils to monitor stuff i guess
 
 use std::io::{stdin, Read};
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 pub fn time(f: impl FnOnce()) -> Duration {
     let time = Instant::now();
@@ -13,5 +13,5 @@ pub fn time(f: impl FnOnce()) -> Duration {
 
 pub fn pause() {
     println!("press enter to continue");
-    stdin().read(&mut [0]).unwrap();
+    stdin().read_line(&mut String::new()).unwrap();
 }

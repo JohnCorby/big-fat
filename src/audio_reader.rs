@@ -1,7 +1,7 @@
 //! thingy for reading audio files
 
 use crate::{CHANNELS, SAMPLE_RATE};
-use anyhow::{ensure, Context, Result};
+use anyhow::*;
 use rodio::source::SamplesConverter;
 use rodio::{Decoder, Source};
 use std::fs::File;
@@ -22,12 +22,12 @@ impl AudioReader {
         let sample_iter = decoder.convert_samples();
 
         ensure!(
-            sample_iter.channels() == CHANNELS,
+            sample_iter.channels() == CHANNELS as u16,
             "must have {} channels",
             CHANNELS
         );
         ensure!(
-            sample_iter.sample_rate() == SAMPLE_RATE,
+            sample_iter.sample_rate() == SAMPLE_RATE as u32,
             "must have sample rate of {}",
             SAMPLE_RATE
         );

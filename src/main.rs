@@ -1,71 +1,82 @@
+#![allow(unused)]
+
 mod audio_reader;
 mod audio_result;
 mod util;
 
-use crate::audio_reader::AudioReader;
-use crate::audio_result::AudioResult;
+use anyhow::Error;
+use anyhow::*;
+use audio_reader::AudioReader;
+use audio_result::AudioResult;
 use rayon::prelude::*;
 use rayon::vec::IntoIter;
 use std::mem::size_of;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
+use util::*;
 use walkdir::WalkDir;
 
 // config
 const IN_DIR: &str =
     r"D:\OneDrive - Lake Washington School District\Everything Else\gay\sound is gay";
-pub const CHANNELS: u16 = 2;
-pub const SAMPLE_RATE: u32 = 44100;
+pub const CHANNELS: usize = 2;
+pub const SAMPLE_RATE: usize = 44100;
 pub const OUT_FILE: &str = r".\bruh.wav";
+pub const POLL_EVERY: usize = 10;
 
-fn main() {
+fn main() -> Result<()> {
     // read all paths recursively, ignoring errors
-    let paths = WalkDir::new(IN_DIR)
+    println!("OPENING FILES");
+    let mut readers = WalkDir::new(IN_DIR)
         .into_iter()
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.into_path())
         .filter(|path| path.is_file())
+        .filter_map(|path| match AudioReader::open(&path) {
+            Ok(reader) => Some(reader),
+            Err(err) => {
+                println!(
+                    "error opening {}: {:?}",
+                    path.file_name().unwrap().to_str().unwrap(),
+                    err
+                );
+                None
+            }
+        })
         .collect::<Vec<_>>();
 
-    let total = paths.len();
-    let num_done = AtomicUsize::new(1);
+    // go thru every sample of every file and add it to the result
+    println!("SUMMING FILES");
+    let mut result = AudioResult::new();
+    let mut sample_index = 0;
+    let mut to_remove = Vec::with_capacity(readers.len());
+    while !readers.is_empty() {
+        for (reader_index, reader) in readers.iter_mut().enumerate() {
+            match reader.next() {
+                Some(sample) => result.add(sample_index, sample),
+                None => to_remove.push(reader_index),
+            }
+        }
+        while let Some(reader_index) = to_remove.pop() {
+            readers.remove(reader_index);
+        }
+        sample_index += 1;
 
-    let iter: IntoIter<PathBuf> = paths.into_par_iter();
-    let mut audio_results = vec![];
-    util::time(|| {
-        audio_results = iter
-            .fold(
-                || AudioResult::new(),
-                |mut audio_result, path| {
-                    let name = path.file_name().unwrap().to_str().unwrap();
+        if sample_index % (SAMPLE_RATE * POLL_EVERY) == 0 {
+            println!(
+                "{:?} in, {} readers left",
+                Duration::from_secs_f64(sample_index as f64 / SAMPLE_RATE as f64),
+                readers.len()
+            );
+        }
+    }
 
-                    match AudioReader::open(&path) {
-                        Ok(reader) => {
-                            // process file and track samples
-                            let mut num_samples = 0;
-                            for (j, sample) in reader.enumerate() {
-                                audio_result.add(j, sample);
-                                num_samples = j;
-                            }
+    // save the result
+    println!("SAVING RESULT");
+    result.save().context("error saving audio result")?;
 
-                            // print bytes size of samples
-                            println!(
-                                "{} - {} mb",
-                                name,
-                                (num_samples * size_of::<f32>()) as f32 / 1_000_000f32
-                            );
-                        }
-                        Err(error) => println!("{} - error: {:?}", name, error),
-                    }
-
-                    // increment/print done
-                    let num_done = num_done.fetch_add(1, Ordering::Relaxed);
-                    println!("{}/{}", num_done, total);
-
-                    audio_result
-                },
-            )
-            .collect::<Vec<_>>()
-    });
-    util::pause();
+    println!("DONE!");
+    pause();
+    Ok(())
 }

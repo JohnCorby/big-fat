@@ -1,7 +1,8 @@
 //! thingy for storing the sum of the audio files
 
 use crate::{CHANNELS, OUT_FILE, SAMPLE_RATE};
-use hound::{SampleFormat, WavSpec};
+use anyhow::*;
+use hound::{SampleFormat, WavSpec, WavWriter};
 
 pub struct AudioResult {
     samples: Vec<f32>,
@@ -20,18 +21,20 @@ impl AudioResult {
         self.samples[index] += sample;
     }
 
-    pub fn save(&mut self) {
+    pub fn save(&mut self) -> Result<()> {
         let spec = WavSpec {
-            channels: CHANNELS,
-            sample_rate: SAMPLE_RATE,
+            channels: CHANNELS as u16,
+            sample_rate: SAMPLE_RATE as u32,
             bits_per_sample: 32,
             sample_format: SampleFormat::Float,
         };
-        let mut writer =
-            hound::WavWriter::create(OUT_FILE, spec).expect("error creating wav writer");
+        let mut writer = WavWriter::create(OUT_FILE, spec).context("error creating wav writer")?;
         for sample in &self.samples {
-            writer.write_sample(*sample).expect("error writing sample");
+            writer
+                .write_sample(*sample)
+                .context("error writing sample")?;
         }
-        writer.finalize().expect("error finalizing wav writer");
+        writer.finalize().context("error finalizing wav writer")?;
+        Ok(())
     }
 }
