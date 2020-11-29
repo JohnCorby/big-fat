@@ -1,8 +1,11 @@
 mod audio_reader;
 mod audio_result;
+mod util;
 
 use crate::audio_reader::AudioReader;
 use crate::audio_result::AudioResult;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use walkdir::WalkDir;
 
 // config
@@ -19,31 +22,56 @@ fn main() {
         .map(|entry| entry.into_path())
         .filter(|path| path.is_file())
         .collect::<Vec<_>>();
+    // artificially extend by duplicating N times
+    // const N: usize = 3;
+    // let total = paths.len();
+    // let paths = paths
+    //     .into_iter()
+    //     .cycle()
+    //     .take(total * N)
+    //     .collect::<Vec<_>>();
 
-    let mut count: usize = 1;
     let total = paths.len();
+    let count = AtomicUsize::new(1);
 
-    paths
-        .iter()
-        .fold(AudioResult::new(), |mut audio_result, path| {
-            println!("{}/{} - {:?}", count, total, path);
-            count += 1;
+    let iter: rayon::vec::IntoIter<_> = paths.into_par_iter();
+    // let iter = paths.into_iter();
+    let mut audio_results = vec![];
+    util::time(|| {
+        audio_results = iter
+            .fold(
+                || AudioResult::new(),
+                |mut audio_result, path| {
+                    let prefix = format!(
+                        "{}/{} - {:?}",
+                        count.fetch_add(1, Ordering::Relaxed),
+                        total,
+                        path.file_name().unwrap()
+                    );
 
-            let reader = AudioReader::open(&path);
-            if reader.is_err() {
-                println!("error: {:?}", reader.err().unwrap());
-                return audio_result;
-            }
-            let reader = reader.unwrap();
+                    let reader = AudioReader::open(&path);
+                    if reader.is_err() {
+                        println!("{} - error: {:?}", prefix, reader.err().unwrap());
+                        return audio_result;
+                    }
+                    let reader = reader.unwrap();
 
-            for (index, sample) in reader.enumerate() {
-                audio_result.add(index, sample);
-            }
+                    let mut num_samples = 0;
+                    for (index, sample) in reader.enumerate() {
+                        audio_result.add(index, sample);
+                        num_samples = index;
+                    }
 
-            audio_result
-        })
-        .save();
+                    println!(
+                        "{} - {} mb",
+                        prefix,
+                        (num_samples * std::mem::size_of::<f32>()) as f32 / 1_000_000f32
+                    );
 
-    println!("done!");
-    std::thread::sleep(std::time::Duration::from_secs(10));
+                    audio_result
+                },
+            )
+            .collect::<Vec<_>>()
+    });
+    util::pause();
 }
