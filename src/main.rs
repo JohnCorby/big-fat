@@ -49,40 +49,43 @@ fn main() -> Result<()> {
     // go thru every sample of every file and add it to the result
     println!("SUMMING FILES");
     let mut result = AudioResult::new().context("error constructing audio result")?;
-    let mut sample_index = 0;
-    let mut to_remove = Vec::with_capacity(readers.len());
-    while !readers.is_empty() {
-        let mut result_sample = 0.0;
-        for (reader_index, reader) in readers.iter_mut().enumerate() {
-            match reader.next() {
-                Some(sample) => result_sample += sample,
-                None => to_remove.push(reader_index),
+    pause();
+    time!({
+        let mut sample_index = 0;
+        let mut to_remove = Vec::with_capacity(readers.len());
+        while !readers.is_empty() {
+            let mut result_sample = 0.0;
+            for (reader_index, reader) in readers.iter_mut().enumerate() {
+                match reader.next() {
+                    Some(sample) => result_sample += sample,
+                    None => to_remove.push(reader_index),
+                }
             }
-        }
-        result
-            .push(result_sample)
-            .context("error pushing result sample")?;
+            result
+                .push(result_sample)
+                .context("error pushing result sample")?;
 
-        while let Some(reader_index) = to_remove.pop() {
-            readers.remove(reader_index);
-        }
+            while let Some(reader_index) = to_remove.pop() {
+                readers.remove(reader_index);
+            }
 
-        if sample_index % (SAMPLE_RATE * POLL_EVERY) == 0 {
-            println!(
-                "{:?} in, {} readers left",
-                Duration::from_secs((sample_index / SAMPLE_RATE) as u64),
-                readers.len()
-            );
-        }
+            if sample_index % (SAMPLE_RATE * POLL_EVERY) == 0 {
+                println!(
+                    "{:?} in, {} readers left",
+                    Duration::from_secs((sample_index / SAMPLE_RATE) as u64),
+                    readers.len()
+                );
+            }
 
-        sample_index += 1;
-    }
+            sample_index += 1;
+        }
+    });
+    pause();
 
     // save the result
     println!("SAVING RESULT");
     result.save().context("error saving audio result")?;
 
     println!("DONE!");
-    pause();
     Ok(())
 }

@@ -1,14 +1,12 @@
-//! misc utils to monitor stuff i guess
-
 use std::io::{stdin, Read};
-use std::time::{Duration, Instant};
 
-pub fn time(f: impl FnOnce()) -> Duration {
-    let time = Instant::now();
-    f();
-    let elapsed = time.elapsed();
-    println!("time elapsed: {:?}", elapsed);
-    elapsed
+#[macro_export]
+macro_rules! time {
+    ($body:block) => {
+        let time = std::time::Instant::now();
+        $body;
+        println!("time elapsed: {:?}", time.elapsed());
+    };
 }
 
 pub fn pause() {
