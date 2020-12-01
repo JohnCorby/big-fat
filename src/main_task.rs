@@ -37,8 +37,8 @@ fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollI
             .iter_mut()
             .enumerate()
             .fold(chunk, |mut chunk, (reader_index, reader)| {
-                for (chunk_index, sample) in reader.take(CHUNK_SIZE).enumerate() {
-                    chunk[chunk_index] += sample;
+                for (chunk_sample, reader_sample) in chunk.iter_mut().zip(reader.into_iter()) {
+                    *chunk_sample += reader_sample
                 }
                 info.current_reader.store(reader_index, Relaxed);
                 if reader.at_eof() {
