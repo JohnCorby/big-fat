@@ -1,5 +1,4 @@
 use crate::*;
-use rayon::prelude::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
 
@@ -27,28 +26,19 @@ fn poll_job(info: &PollInfo) {
     }
 }
 
-fn sum_job(result: &mut AudioResult, readers: Vec<AudioReader>, info: &PollInfo) {
-    // read and sum each entire reader, writing to result
-    let samples: Vec<f32>;
-    time!({
-        samples = IntoParallelIterator::into_par_iter(readers)
-            .fold(
-                || vec![],
-                |mut samples, reader| {
-                    for (index, sample) in reader.enumerate() {
-                        if index >= samples.len() {
-                            samples.resize(index + 1, 0.0);
-                        }
-                        samples[index] += sample;
-                        info.samples_done.store(samples.len(), Relaxed);
-                    }
-                    info.readers_left.fetch_sub(1, Relaxed);
-                    samples
-                },
-            )
-            .flatten()
-            .collect();
-    });
+fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
+    while !readers.is_empty() {
+        // get a sum of the samples
+        let sample = readers.iter_mut().fold(0.0, |sample, reader| {
+            sample + reader.next().unwrap_or_default()
+        });
+        info.samples_done.fetch_add(1, Relaxed);
 
-    result.write(samples).unwrap();
+        // remove done
+        readers.drain_filter(|reader| reader.at_eof());
+        info.readers_left.store(readers.len(), Relaxed);
+
+        // write the sample
+        result.write(sample).unwrap();
+    }
 }

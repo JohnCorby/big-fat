@@ -10,7 +10,6 @@ type Writer = WavWriter<BufWriter<File>>;
 
 pub struct AudioResult {
     writer: Writer,
-    samples: Vec<f32>,
 }
 
 impl AudioResult {
@@ -22,19 +21,13 @@ impl AudioResult {
             sample_format: SampleFormat::Float,
         };
         let writer = Writer::create(OUT_FILE, spec).context("error creating wav writer")?;
-        Ok(AudioResult {
-            writer,
-            samples: vec![],
-        })
+        Ok(AudioResult { writer })
     }
 
-    pub fn write(&mut self, samples: Vec<f32>) -> Result<()> {
-        for sample in samples {
-            self.writer
-                .write_sample(sample)
-                .context("error writing sample")?;
-        }
-        Ok(())
+    pub fn write(&mut self, sample: f32) -> Result<()> {
+        self.writer
+            .write_sample(sample)
+            .context("error writing sample")
     }
 
     pub fn save(self) -> Result<()> {
