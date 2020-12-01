@@ -1,5 +1,6 @@
 #![feature(drain_filter)]
 #![feature(slice_fill)]
+#![feature(iterator_fold_self)]
 #![allow(dead_code)]
 
 mod audio_reader;
