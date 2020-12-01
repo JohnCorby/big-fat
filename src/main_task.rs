@@ -27,18 +27,26 @@ fn poll_job(info: &PollInfo) {
 }
 
 fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
+    let mut chunk = vec![0.0; CHUNK_SIZE];
     while !readers.is_empty() {
-        // get a sum of the samples
-        let sample = readers.iter_mut().fold(0.0, |sample, reader| {
-            sample + reader.next().unwrap_or_default()
+        // read and sum
+        readers.iter_mut().fold(&mut chunk, |chunk, reader| {
+            let samples_done = info.samples_done.load(Relaxed);
+            for (chunk_index, sample) in reader.take(CHUNK_SIZE).enumerate() {
+                chunk[chunk_index] += sample;
+                info.samples_done
+                    .store(samples_done + chunk_index + 1, Relaxed);
+            }
+            if reader.at_eof() {
+                info.readers_left.fetch_sub(1, Relaxed);
+            }
+            chunk
         });
-        info.samples_done.fetch_add(1, Relaxed);
 
         // remove done
         readers.drain_filter(|reader| reader.at_eof());
-        info.readers_left.store(readers.len(), Relaxed);
 
-        // write the sample
-        result.write(sample).unwrap();
+        // write to result, resetting the chunk
+        result.flush(&mut chunk).unwrap();
     }
 }

@@ -24,10 +24,14 @@ impl AudioResult {
         Ok(AudioResult { writer })
     }
 
-    pub fn write(&mut self, sample: f32) -> Result<()> {
-        self.writer
-            .write_sample(sample)
-            .context("error writing sample")
+    pub fn flush(&mut self, chunk: &mut [f32]) -> Result<()> {
+        for sample in chunk {
+            self.writer
+                .write_sample(*sample)
+                .context("error writing sample")?;
+            *sample = 0.0;
+        }
+        Ok(())
     }
 
     pub fn save(self) -> Result<()> {
