@@ -51,6 +51,10 @@ fn open_readers() -> Vec<AudioReader> {
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.into_path())
         .filter(|path| path.is_file())
+        // .collect::<Vec<_>>()
+        // .iter()
+        // .cycle()
+        // .take(1000)
         .filter_map(|path| match AudioReader::open(&path) {
             Ok(reader) => Some(reader),
             Err(err) => {

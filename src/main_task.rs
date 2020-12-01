@@ -1,5 +1,4 @@
 use crate::*;
-// use rayon::prelude::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::Mutex;
@@ -7,8 +6,9 @@ use std::sync::Mutex;
 pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo {
         readers_left: AtomicUsize::new(readers.len()),
-        chunks_done: AtomicUsize::new(0),
+        current_chunk: AtomicUsize::new(0),
         current_reader: Default::default(),
+        current_chunk_index: Default::default(),
     };
     rayon::scope(|s| {
         s.spawn(|_| poll_job(&info));
@@ -19,8 +19,9 @@ pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
 #[derive(Debug)]
 struct PollInfo {
     readers_left: AtomicUsize,
-    chunks_done: AtomicUsize,
+    current_chunk: AtomicUsize,
     current_reader: Mutex<String>,
+    current_chunk_index: AtomicUsize,
 }
 
 fn poll_job(info: &PollInfo) {
@@ -35,8 +36,9 @@ fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollI
     while !readers.is_empty() {
         // read and sum
         chunk = readers.iter_mut().fold(chunk, |mut chunk, reader| {
-            for (chunk_sample, reader_sample) in chunk.iter_mut().zip(reader.into_iter()) {
-                *chunk_sample += reader_sample
+            for (chunk_index, reader_sample) in reader.take(CHUNK_SIZE).enumerate() {
+                chunk[chunk_index] += reader_sample;
+                info.current_chunk_index.store(chunk_index, Relaxed);
             }
             *info.current_reader.lock().unwrap() = format!("{}", reader);
             if reader.at_eof() {
@@ -44,7 +46,7 @@ fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollI
             }
             chunk
         });
-        info.chunks_done.fetch_add(1, Relaxed);
+        info.current_chunk.fetch_add(1, Relaxed);
 
         // remove done
         readers.drain_filter(|reader| reader.at_eof());
