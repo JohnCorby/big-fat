@@ -4,20 +4,22 @@ use crate::*;
 use anyhow::*;
 use rodio::source::SamplesConverter;
 use rodio::{Decoder, Source};
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::BufReader;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 type SampleIter = SamplesConverter<Decoder<BufReader<File>>, f32>;
 
 pub struct AudioReader {
     sample_iter: SampleIter,
     at_eof: bool,
+    path: PathBuf,
 }
 
 impl AudioReader {
     pub fn open(path: &Path) -> Result<Self> {
-        let file = File::open(path).context("error opening file")?;
+        let file = File::open(&path).context("error opening file")?;
         let reader = BufReader::new(file);
         let decoder = Decoder::new(reader).context("error constructing decoder")?;
         let sample_iter = decoder.convert_samples();
@@ -36,6 +38,7 @@ impl AudioReader {
         Ok(AudioReader {
             sample_iter,
             at_eof: false,
+            path: path.into(),
         })
     }
 
@@ -50,5 +53,15 @@ impl Iterator for AudioReader {
         let next = self.sample_iter.next();
         self.at_eof = next.is_none();
         next
+    }
+}
+
+impl Display for AudioReader {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "audio reader ({})",
+            self.path.file_name().unwrap().to_str().unwrap()
+        )
     }
 }

@@ -2,12 +2,13 @@ use crate::*;
 // use rayon::prelude::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
+use std::sync::Mutex;
 
 pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo {
         readers_left: AtomicUsize::new(readers.len()),
         chunks_done: AtomicUsize::new(0),
-        current_reader: AtomicUsize::new(0),
+        current_reader: Default::default(),
     };
     rayon::scope(|s| {
         s.spawn(|_| poll_job(&info));
@@ -19,7 +20,7 @@ pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
 struct PollInfo {
     readers_left: AtomicUsize,
     chunks_done: AtomicUsize,
-    current_reader: AtomicUsize,
+    current_reader: Mutex<String>,
 }
 
 fn poll_job(info: &PollInfo) {
@@ -33,19 +34,16 @@ fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollI
     let mut chunk = vec![0.0; CHUNK_SIZE];
     while !readers.is_empty() {
         // read and sum
-        chunk = readers
-            .iter_mut()
-            .enumerate()
-            .fold(chunk, |mut chunk, (reader_index, reader)| {
-                for (chunk_sample, reader_sample) in chunk.iter_mut().zip(reader.into_iter()) {
-                    *chunk_sample += reader_sample
-                }
-                info.current_reader.store(reader_index, Relaxed);
-                if reader.at_eof() {
-                    info.readers_left.fetch_sub(1, Relaxed);
-                }
-                chunk
-            });
+        chunk = readers.iter_mut().fold(chunk, |mut chunk, reader| {
+            for (chunk_sample, reader_sample) in chunk.iter_mut().zip(reader.into_iter()) {
+                *chunk_sample += reader_sample
+            }
+            *info.current_reader.lock().unwrap() = format!("{}", reader);
+            if reader.at_eof() {
+                info.readers_left.fetch_sub(1, Relaxed);
+            }
+            chunk
+        });
         info.chunks_done.fetch_add(1, Relaxed);
 
         // remove done

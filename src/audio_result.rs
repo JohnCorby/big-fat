@@ -3,8 +3,10 @@
 use crate::*;
 use anyhow::*;
 use hound::{SampleFormat, WavSpec, WavWriter};
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::BufWriter;
+use std::path::Path;
 
 type Writer = WavWriter<BufWriter<File>>;
 
@@ -38,5 +40,15 @@ impl AudioResult {
         self.writer
             .finalize()
             .context("error finalizing wav writer")
+    }
+}
+
+impl Display for AudioResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "audio result ({})",
+            Path::new(OUT_FILE).file_name().unwrap().to_str().unwrap()
+        )
     }
 }
