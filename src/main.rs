@@ -16,7 +16,8 @@ use main_task::make_result;
 use walkdir::WalkDir;
 
 // config
-const IN_DIR: &str = r"D:\OneDrive - Lake Washington School District\Everything Else\gay\sound is gay\vgm server (ie parker)";
+const IN_DIR: &str =
+    r"D:\OneDrive - Lake Washington School District\Everything Else\gay\sound is gay";
 pub const OUT_FILE: &str = r".\bruh.wav";
 
 pub const CHANNELS: u16 = 2;
