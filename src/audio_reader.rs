@@ -12,7 +12,7 @@ type SampleIter = SamplesConverter<Decoder<BufReader<File>>, f32>;
 
 pub struct AudioReader {
     sample_iter: SampleIter,
-    reached_none: bool,
+    at_eof: bool,
 }
 
 impl AudioReader {
@@ -35,12 +35,12 @@ impl AudioReader {
 
         Ok(AudioReader {
             sample_iter,
-            reached_none: false,
+            at_eof: false,
         })
     }
 
-    pub fn reached_none(&self) -> bool {
-        self.reached_none
+    pub fn at_eof(&self) -> bool {
+        self.at_eof
     }
 }
 
@@ -48,7 +48,7 @@ impl Iterator for AudioReader {
     type Item = f32;
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.sample_iter.next();
-        self.reached_none = next.is_none();
+        self.at_eof = next.is_none();
         next
     }
 }

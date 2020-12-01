@@ -1,6 +1,6 @@
 #![feature(drain_filter)]
 #![feature(slice_fill)]
-// #![allow(unused)]
+#![allow(dead_code)]
 
 mod audio_reader;
 mod audio_result;
@@ -12,7 +12,7 @@ use audio_reader::AudioReader;
 use audio_result::AudioResult;
 use std::time::Duration;
 // use util::*;
-use main_task::main_task;
+use main_task::make_result;
 use walkdir::WalkDir;
 
 // config
@@ -22,19 +22,19 @@ pub const OUT_FILE: &str = r".\bruh.wav";
 pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
 
-pub const CHUNK_SIZE: usize = (1_000_000usize / 4).next_power_of_two();
+pub const CHUNK_SIZE: usize = (1e9 as usize / 4).next_power_of_two();
 pub const POLL_EVERY: Duration = Duration::from_secs(1);
 
 fn main() -> Result<()> {
     // read all paths recursively, ignoring errors
     println!("OPENING FILES");
-    let mut readers = open_readers();
+    let readers = open_readers();
 
     // go thru every sample of every file and add it to the result
     println!("SUMMING FILES");
     let mut result = AudioResult::new().context("error constructing audio result")?;
     // pause();
-    time!({ main_task(&mut result, &mut readers) });
+    time!({ make_result(&mut result, readers) });
     // pause();
 
     // save the result

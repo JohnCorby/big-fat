@@ -1,17 +1,15 @@
 use crate::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::Mutex;
 
-pub fn main_task(result: &mut AudioResult, readers: &mut [AudioReader]) {
+pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo {
         samples_done: AtomicUsize::new(0),
         readers_left: AtomicUsize::new(readers.len()),
     };
-    let readers = readers.iter_mut().map(ReaderLock::new).collect::<Vec<_>>();
     rayon::scope(|s| {
-        s.spawn(|_| sum_job(result, &readers, &info));
         s.spawn(|_| poll_job(&info));
+        sum_job(result, readers, &info);
     });
 }
 
@@ -33,38 +31,23 @@ fn poll_job(info: &PollInfo) {
     }
 }
 
-type ReaderLock<'a> = Mutex<&'a mut AudioReader>;
-fn sum_job(result: &mut AudioResult, readers: &[ReaderLock], info: &PollInfo) {
+// type ReaderLock<'a> = Mutex<&'a mut AudioReader>;
+fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
     let mut chunk = vec![0.0; CHUNK_SIZE];
-    loop {
-        // break if done
-        if info.readers_left.load(Relaxed) == 0 {
-            break;
-        }
-
+    while info.readers_left.load(Relaxed) > 0 {
         // read and sum
-        chunk.fill(0.0);
-        for reader in readers.iter() {
-            let mut reader = reader.lock().unwrap();
+        for reader in readers.iter_mut() {
+            let samples_done = info.samples_done.load(Relaxed);
             for (chunk_index, sample) in reader.take(CHUNK_SIZE).enumerate() {
                 chunk[chunk_index] += sample;
+                info.samples_done.store(samples_done + chunk_index, Relaxed);
+            }
+            if reader.at_eof() {
+                info.readers_left.fetch_sub(1, Relaxed);
             }
         }
-        info.samples_done.fetch_add(CHUNK_SIZE, Relaxed);
 
-        // write to result
-        result.push(&chunk).unwrap();
-
-        // track remaining
-        info.readers_left.store(
-            readers
-                .iter()
-                .filter(|reader| {
-                    let reader = reader.lock().unwrap();
-                    !reader.reached_none()
-                })
-                .count(),
-            Relaxed,
-        );
+        // write to result, resetting the chunk
+        result.flush(&mut chunk).unwrap();
     }
 }
