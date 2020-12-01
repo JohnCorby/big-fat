@@ -1,11 +1,13 @@
 use crate::*;
+// use rayon::prelude::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
 
 pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo {
-        samples_done: AtomicUsize::new(0),
         readers_left: AtomicUsize::new(readers.len()),
+        chunks_done: AtomicUsize::new(0),
+        current_reader: AtomicUsize::new(0),
     };
     rayon::scope(|s| {
         s.spawn(|_| poll_job(&info));
@@ -15,8 +17,9 @@ pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
 
 #[derive(Debug)]
 struct PollInfo {
-    samples_done: AtomicUsize,
     readers_left: AtomicUsize,
+    chunks_done: AtomicUsize,
+    current_reader: AtomicUsize,
 }
 
 fn poll_job(info: &PollInfo) {
@@ -30,18 +33,20 @@ fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollI
     let mut chunk = vec![0.0; CHUNK_SIZE];
     while !readers.is_empty() {
         // read and sum
-        readers.iter_mut().fold(&mut chunk, |chunk, reader| {
-            let samples_done = info.samples_done.load(Relaxed);
-            for (chunk_index, sample) in reader.take(CHUNK_SIZE).enumerate() {
-                chunk[chunk_index] += sample;
-                info.samples_done
-                    .store(samples_done + chunk_index + 1, Relaxed);
-            }
-            if reader.at_eof() {
-                info.readers_left.fetch_sub(1, Relaxed);
-            }
-            chunk
-        });
+        chunk = readers
+            .iter_mut()
+            .enumerate()
+            .fold(chunk, |mut chunk, (reader_index, reader)| {
+                for (chunk_index, sample) in reader.take(CHUNK_SIZE).enumerate() {
+                    chunk[chunk_index] += sample;
+                }
+                info.current_reader.store(reader_index, Relaxed);
+                if reader.at_eof() {
+                    info.readers_left.fetch_sub(1, Relaxed);
+                }
+                chunk
+            });
+        info.chunks_done.fetch_add(1, Relaxed);
 
         // remove done
         readers.drain_filter(|reader| reader.at_eof());
