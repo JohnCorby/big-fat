@@ -1,6 +1,6 @@
 //! thingy for reading audio files
 
-use crate::{CHANNELS, SAMPLE_RATE};
+use crate::*;
 use anyhow::*;
 use rodio::source::SamplesConverter;
 use rodio::{Decoder, Source};
@@ -12,6 +12,7 @@ type SampleIter = SamplesConverter<Decoder<BufReader<File>>, f32>;
 
 pub struct AudioReader {
     sample_iter: SampleIter,
+    reached_none: bool,
 }
 
 impl AudioReader {
@@ -32,13 +33,22 @@ impl AudioReader {
             SAMPLE_RATE
         );
 
-        Ok(AudioReader { sample_iter })
+        Ok(AudioReader {
+            sample_iter,
+            reached_none: false,
+        })
+    }
+
+    pub fn reached_none(&self) -> bool {
+        self.reached_none
     }
 }
 
 impl Iterator for AudioReader {
     type Item = f32;
     fn next(&mut self) -> Option<Self::Item> {
-        self.sample_iter.next()
+        let next = self.sample_iter.next();
+        self.reached_none = next.is_none();
+        next
     }
 }

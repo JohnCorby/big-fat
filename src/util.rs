@@ -1,4 +1,4 @@
-use std::io::{stdin, Read};
+use std::io::stdin;
 
 #[macro_export]
 macro_rules! time {

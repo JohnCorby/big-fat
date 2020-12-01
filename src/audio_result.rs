@@ -1,6 +1,6 @@
 //! thingy for storing the sum of the audio files
 
-use crate::{CHANNELS, OUT_FILE, SAMPLE_RATE};
+use crate::*;
 use anyhow::*;
 use hound::{SampleFormat, WavSpec, WavWriter};
 use std::fs::File;
@@ -24,19 +24,16 @@ impl AudioResult {
         Ok(AudioResult { writer })
     }
 
-    pub fn push(&mut self, sample: f32) -> Result<()> {
-        self.writer
-            .write_sample(sample)
-            .context("error writing sample")
+    pub fn push(&mut self, chunk: &[f32]) -> Result<()> {
+        for sample in chunk {
+            self.writer
+                .write_sample(*sample)
+                .context("error writing sample")?;
+        }
+        Ok(())
     }
 
-    pub fn save(mut self) -> Result<()> {
-        // fixme make this a real fix instead of just padding lmao
-        let desired_num_samples = self.writer.duration() * CHANNELS as u32 + CHANNELS as u32;
-        while self.writer.len() < desired_num_samples {
-            self.push(0.0);
-        }
-
+    pub fn save(self) -> Result<()> {
         self.writer
             .finalize()
             .context("error finalizing wav writer")
