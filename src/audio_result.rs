@@ -45,10 +45,6 @@ impl AudioResult {
 
 impl Display for AudioResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "audio result ({})",
-            Path::new(OUT_FILE).file_name().unwrap().to_str().unwrap()
-        )
+        write!(f, "audio result ({})", file_name(Path::new(OUT_FILE)))
     }
 }

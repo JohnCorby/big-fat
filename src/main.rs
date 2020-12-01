@@ -9,9 +9,9 @@ mod util;
 use anyhow::*;
 use audio_reader::AudioReader;
 use audio_result::AudioResult;
-use std::time::Duration;
-// use util::*;
 use main_task::make_result;
+use std::time::Duration;
+use util::*;
 use walkdir::WalkDir;
 
 // config
@@ -58,11 +58,7 @@ fn open_readers() -> Vec<AudioReader> {
         .filter_map(|path| match AudioReader::open(&path) {
             Ok(reader) => Some(reader),
             Err(err) => {
-                println!(
-                    "error opening {}: {:?}",
-                    path.file_name().unwrap().to_str().unwrap(),
-                    err
-                );
+                println!("error opening {}: {:?}", file_name(&path), err);
                 None
             }
         })

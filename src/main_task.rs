@@ -6,17 +6,12 @@ use std::sync::Mutex;
 pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo {
         readers_left: AtomicUsize::new(readers.len()),
-        current_chunk: AtomicUsize::new(0),
-        current_reader: Default::default(),
-        current_chunk_index: Default::default(),
+        ..Default::default()
     };
-    rayon::scope(|s| {
-        s.spawn(|_| poll_job(&info));
-        sum_job(result, readers, &info);
-    });
+    rayon::join(|| sum_job(result, readers, &info), || poll_job(&info));
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct PollInfo {
     readers_left: AtomicUsize,
     current_chunk: AtomicUsize,

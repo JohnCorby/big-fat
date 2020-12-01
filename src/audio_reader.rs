@@ -58,10 +58,6 @@ impl Iterator for AudioReader {
 
 impl Display for AudioReader {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "audio reader ({})",
-            self.path.file_name().unwrap().to_str().unwrap()
-        )
+        write!(f, "audio reader ({})", file_name(&self.path))
     }
 }
