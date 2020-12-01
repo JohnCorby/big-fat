@@ -1,17 +1,11 @@
-use crate::audio_reader::AudioReader;
-use crate::audio_result::AudioResult;
-use crate::{CHUNK_SIZE, POLL_EVERY};
+use crate::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Mutex, RwLock};
 
-type ReadersLock<'a> = RwLock<Vec<ReaderLock<'a>>>;
-type ReaderLock<'a> = Mutex<&'a mut AudioReader>;
-
 pub fn main_task(result: &mut AudioResult, readers: &mut [AudioReader]) {
     let info = PollInfo {
-        reader_index: AtomicUsize::new(0),
-        sample_index: AtomicUsize::new(0),
+        samples_done: AtomicUsize::new(0),
         readers_left: AtomicUsize::new(readers.len()),
     };
     let readers: ReadersLock = ReadersLock::new(readers.iter_mut().map(ReaderLock::new).collect());
@@ -23,8 +17,7 @@ pub fn main_task(result: &mut AudioResult, readers: &mut [AudioReader]) {
 
 #[derive(Debug)]
 struct PollInfo {
-    reader_index: AtomicUsize,
-    sample_index: AtomicUsize,
+    samples_done: AtomicUsize,
     readers_left: AtomicUsize,
 }
 
@@ -40,6 +33,9 @@ fn poll_job(info: &PollInfo) {
     }
 }
 
+type ReadersLock<'a> = RwLock<Vec<ReaderLock<'a>>>;
+type ReaderLock<'a> = Mutex<&'a mut AudioReader>;
+
 fn sum_job(result: &mut AudioResult, readers: &ReadersLock, info: &PollInfo) {
     let mut chunk = vec![0.0; CHUNK_SIZE];
     loop {
@@ -51,15 +47,13 @@ fn sum_job(result: &mut AudioResult, readers: &ReadersLock, info: &PollInfo) {
             }
 
             chunk.fill(0.0);
-            info.reader_index.store(0, Relaxed);
             for reader in readers.iter() {
                 let mut reader = reader.lock().unwrap();
                 for (chunk_index, sample) in reader.take(CHUNK_SIZE).enumerate() {
                     chunk[chunk_index] += sample;
                 }
-                info.reader_index.fetch_add(1, Relaxed);
             }
-            info.sample_index.fetch_add(CHUNK_SIZE, Relaxed);
+            info.samples_done.fetch_add(CHUNK_SIZE, Relaxed);
         }
 
         // write to result
