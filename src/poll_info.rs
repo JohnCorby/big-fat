@@ -5,21 +5,21 @@ use std::sync::atomic::Ordering::Relaxed;
 
 pub struct PollInfo {
     readers_left: AtomicUsize,
-    chunks_done: AtomicUsize,
+    iterations_done: AtomicUsize,
 }
 
 impl PollInfo {
     pub fn new(num_readers: usize) -> Self {
         PollInfo {
             readers_left: AtomicUsize::new(num_readers),
-            chunks_done: Default::default(),
+            iterations_done: Default::default(),
         }
     }
     pub fn reader_done(&self) {
         self.readers_left.fetch_sub(1, Relaxed);
     }
-    pub fn chunk_done(&self) {
-        self.chunks_done.fetch_add(1, Relaxed);
+    pub fn iter_done(&self) {
+        self.iterations_done.fetch_add(1, Relaxed);
     }
 }
 
@@ -27,8 +27,8 @@ impl Display for PollInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
-            "{:?} readers left\t|\t{:?} chunks done",
-            self.readers_left, self.chunks_done
+            "{:?} readers left\t\t{:?} iterations done",
+            self.readers_left, self.iterations_done
         )
     }
 }

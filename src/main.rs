@@ -24,7 +24,6 @@ pub const OUT_FILE: &str = r".\bruh.wav";
 pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
 
-pub const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
 
 fn main() -> Result<()> {
@@ -71,6 +70,6 @@ fn sum(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo::new(readers.len());
     rayon::join(
         || poll_job(&info),
-        || Strategy2::execute(result, readers, &info),
+        || Strategy3::execute(result, readers, &info),
     );
 }
