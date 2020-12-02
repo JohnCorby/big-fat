@@ -1,7 +1,7 @@
 use crate::*;
+use rayon::prelude::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::Mutex;
 
 pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo {
@@ -14,9 +14,7 @@ pub fn make_result(result: &mut AudioResult, readers: Vec<AudioReader>) {
 #[derive(Debug, Default)]
 struct PollInfo {
     readers_left: AtomicUsize,
-    current_chunk: AtomicUsize,
-    current_reader: Mutex<String>,
-    current_chunk_index: AtomicUsize,
+    chunks_done: AtomicUsize,
 }
 
 fn poll_job(info: &PollInfo) {
@@ -27,26 +25,37 @@ fn poll_job(info: &PollInfo) {
 }
 
 fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
-    let mut chunk = vec![0.0; CHUNK_SIZE];
+    // read from 1 reader at a time and add to chunk
+    let fold_op = |mut chunk: Vec<f32>, reader: &mut AudioReader| {
+        for (index, sample) in reader.take(CHUNK_SIZE).enumerate() {
+            chunk[index] += sample;
+        }
+        if reader.at_eof() {
+            info.readers_left.fetch_sub(1, Relaxed);
+        }
+        chunk
+    };
+    // create a chunk vec
+    let make_chunk = || vec![0.0; CHUNK_SIZE];
+    // fold all the readers
+    let fold = |readers: &mut [AudioReader]| {
+        readers
+            .into_par_iter()
+            .fold(make_chunk, fold_op)
+            .reduce(make_chunk, |l, r| {
+                l.iter().zip(r).map(|(ls, rs)| ls + rs).collect()
+            })
+    };
+
     while !readers.is_empty() {
         // read and sum
-        chunk = readers.iter_mut().fold(chunk, |mut chunk, reader| {
-            for (chunk_index, reader_sample) in reader.take(CHUNK_SIZE).enumerate() {
-                chunk[chunk_index] += reader_sample;
-                info.current_chunk_index.store(chunk_index, Relaxed);
-            }
-            *info.current_reader.lock().unwrap() = format!("{}", reader);
-            if reader.at_eof() {
-                info.readers_left.fetch_sub(1, Relaxed);
-            }
-            chunk
-        });
-        info.current_chunk.fetch_add(1, Relaxed);
+        let chunk = fold(&mut readers);
+        info.chunks_done.fetch_add(1, Relaxed);
 
         // remove done
         readers.drain_filter(|reader| reader.at_eof());
 
-        // write to result, resetting the chunk
-        result.flush(&mut chunk).unwrap();
+        // write to result
+        result.flush(chunk).unwrap();
     }
 }

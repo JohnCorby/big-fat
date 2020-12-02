@@ -22,7 +22,7 @@ pub const OUT_FILE: &str = r".\bruh.wav";
 pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
 
-pub const CHUNK_SIZE: usize = (1e9 as usize / 4).next_power_of_two();
+pub const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
 
 fn main() -> Result<()> {
