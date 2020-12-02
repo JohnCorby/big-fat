@@ -3,7 +3,7 @@
 use crate::*;
 use anyhow::*;
 use hound::{SampleFormat, WavSpec, WavWriter};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
@@ -26,13 +26,10 @@ impl AudioResult {
         Ok(AudioResult { writer })
     }
 
-    pub fn flush(&mut self, chunk: Vec<f32>) -> Result<()> {
-        for sample in chunk {
-            self.writer
-                .write_sample(sample)
-                .context("error writing sample")?;
-        }
-        Ok(())
+    pub fn write(&mut self, sample: f32) -> Result<()> {
+        self.writer
+            .write_sample(sample)
+            .context("error writing sample")
     }
 
     pub fn save(self) -> Result<()> {
@@ -42,8 +39,10 @@ impl AudioResult {
     }
 }
 
-impl Display for AudioResult {
+impl Debug for AudioResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "audio result ({})", file_name(Path::new(OUT_FILE)))
+        f.debug_struct("AudioResult")
+            .field("name", &file_name(Path::new(OUT_FILE)))
+            .finish()
     }
 }

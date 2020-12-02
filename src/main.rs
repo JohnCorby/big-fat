@@ -3,13 +3,15 @@
 
 mod audio_reader;
 mod audio_result;
-mod main_task;
+mod poll_info;
+mod strategy;
 mod util;
 
+use crate::poll_info::{poll_job, PollInfo};
+use crate::strategy::*;
 use anyhow::*;
 use audio_reader::AudioReader;
 use audio_result::AudioResult;
-use main_task::make_result;
 use std::time::Duration;
 use util::*;
 use walkdir::WalkDir;
@@ -34,7 +36,7 @@ fn main() -> Result<()> {
     println!("SUMMING FILES");
     let mut result = AudioResult::new().context("error constructing audio result")?;
     // pause();
-    time!({ make_result(&mut result, readers) });
+    time!({ sum(&mut result, readers) });
     // pause();
 
     // save the result
@@ -63,4 +65,12 @@ fn open_readers() -> Vec<AudioReader> {
             }
         })
         .collect()
+}
+
+fn sum(result: &mut AudioResult, readers: Vec<AudioReader>) {
+    let info = PollInfo::new(readers.len());
+    rayon::join(
+        || poll_job(&info),
+        || Strategy2::execute(result, readers, &info),
+    );
 }

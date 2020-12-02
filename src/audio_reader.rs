@@ -4,7 +4,7 @@ use crate::*;
 use anyhow::*;
 use rodio::source::SamplesConverter;
 use rodio::{Decoder, Source};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -56,8 +56,11 @@ impl Iterator for AudioReader {
     }
 }
 
-impl Display for AudioReader {
+impl Debug for AudioReader {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "audio reader ({})", file_name(&self.path))
+        f.debug_struct("AudioReader")
+            .field("name", &file_name(&self.path))
+            .field("at_eof", &self.at_eof)
+            .finish()
     }
 }
