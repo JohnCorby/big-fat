@@ -11,6 +11,15 @@ macro_rules! time {
     };
 }
 
+#[macro_export]
+macro_rules! try_assert {
+    ($cond:expr, $($arg:tt)*) => {
+        if !$cond {
+            return std::result::Result::Err(format!($($arg)*));
+        }
+    };
+}
+
 pub fn pause() {
     println!("press enter to continue");
     stdin().read_line(&mut String::new()).unwrap();

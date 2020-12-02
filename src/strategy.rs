@@ -13,7 +13,7 @@ impl Strategy for Strategy1 {
     fn execute(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
         let samples = par_fold(
             &mut readers,
-            Vec::new,
+            || vec![],
             |mut samples, reader| {
                 for (index, sample) in reader.enumerate() {
                     if index >= samples.len() {
@@ -34,10 +34,10 @@ impl Strategy for Strategy1 {
                 ls.into_iter().zip(rs).map(|(l, r)| l + r).collect()
             },
         );
-        info.iter_done();
+        info.iteration_done();
 
         for sample in samples {
-            result.write(sample).unwrap();
+            result.write(sample);
         }
     }
 }
@@ -54,11 +54,11 @@ impl Strategy for Strategy2 {
                 }
                 result_sample
             });
-            info.iter_done();
+            info.iteration_done();
 
             readers.drain_filter(|reader| reader.at_eof());
 
-            result.write(result_sample).unwrap();
+            result.write(result_sample);
         }
     }
 }
@@ -85,15 +85,22 @@ impl Strategy for Strategy3 {
                 },
                 |ls, rs| ls.into_iter().zip(rs).map(|(l, r)| l + r).collect(),
             );
-            info.iter_done();
+            info.iteration_done();
 
             // remove done
             readers.drain_filter(|reader| reader.at_eof());
 
             // write to result
             for sample in chunk {
-                result.write(sample).unwrap();
+                result.write(sample);
             }
         }
     }
+}
+
+/// split into time slices, process in parallel
+pub struct Strategy4;
+impl Strategy for Strategy4 {
+    #[allow(warnings)]
+    fn execute(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {}
 }

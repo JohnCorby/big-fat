@@ -10,7 +10,7 @@ pub struct PollInfo {
 
 impl PollInfo {
     pub fn new(num_readers: usize) -> Self {
-        PollInfo {
+        Self {
             readers_left: AtomicUsize::new(num_readers),
             iterations_done: Default::default(),
         }
@@ -18,7 +18,7 @@ impl PollInfo {
     pub fn reader_done(&self) {
         self.readers_left.fetch_sub(1, Relaxed);
     }
-    pub fn iter_done(&self) {
+    pub fn iteration_done(&self) {
         self.iterations_done.fetch_add(1, Relaxed);
     }
 }

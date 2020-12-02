@@ -9,7 +9,6 @@ mod util;
 
 use crate::poll_info::{poll_job, PollInfo};
 use crate::strategy::*;
-use anyhow::*;
 use audio_reader::AudioReader;
 use audio_result::AudioResult;
 use std::time::Duration;
@@ -26,24 +25,23 @@ pub const SAMPLE_RATE: u32 = 44100;
 
 pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
 
-fn main() -> Result<()> {
+fn main() {
     // read all paths recursively, ignoring errors
     println!("OPENING FILES");
     let readers = open_readers();
 
     // go thru every sample of every file and add it to the result
     println!("SUMMING FILES");
-    let mut result = AudioResult::new().context("error constructing audio result")?;
+    let mut result = AudioResult::new();
     // pause();
     time!({ sum(&mut result, readers) });
     // pause();
 
     // save the result
     println!("SAVING RESULT");
-    result.save().context("error saving audio result")?;
+    result.save();
 
     println!("DONE!");
-    Ok(())
 }
 
 fn open_readers() -> Vec<AudioReader> {
@@ -52,10 +50,6 @@ fn open_readers() -> Vec<AudioReader> {
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.into_path())
         .filter(|path| path.is_file())
-        // .collect::<Vec<_>>()
-        // .iter()
-        // .cycle()
-        // .take(1000)
         .filter_map(|path| match AudioReader::open(&path) {
             Ok(reader) => Some(reader),
             Err(err) => {
@@ -63,6 +57,7 @@ fn open_readers() -> Vec<AudioReader> {
                 None
             }
         })
+        // .flat_map(|reader| (0..10).map(move |_| reader.clone())) // artificial lengthening
         .collect()
 }
 
