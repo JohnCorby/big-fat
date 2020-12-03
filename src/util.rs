@@ -4,11 +4,11 @@ use std::path::Path;
 
 #[macro_export]
 macro_rules! time {
-    ($body:block) => {
+    ($body:block) => {{
         let time = std::time::Instant::now();
         $body;
-        println!("time elapsed: {:?}", time.elapsed());
-    };
+        time.elapsed()
+    }};
 }
 
 #[macro_export]
@@ -40,5 +40,5 @@ pub fn par_fold<Items: IntoParallelIterator, Result: Send>(
     fold: impl Fn(Result, Items::Item) -> Result + Send + Sync,
     reduce: impl Fn(Result, Result) -> Result + Send + Sync,
 ) -> Result {
-    items.into_par_iter().fold(init, fold).reduce(init, reduce)
+    par_iter(items).fold(init, fold).reduce(init, reduce)
 }

@@ -102,6 +102,23 @@ impl Strategy for Strategy3 {
 /// split into time slices, process in parallel
 pub struct Strategy4;
 impl Strategy for Strategy4 {
-    #[allow(warnings)]
-    fn execute(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {}
+    #[allow(unused)]
+    fn execute(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
+        use rayon::prelude::*;
+
+        par_iter(readers).for_each(|reader| {
+            let count;
+            let time1 = time!({ count = reader.clone().count() });
+            let time2 = time!({ reader.par_bridge().count() });
+            println!(
+                "{:?} serial \t {:?} parallel \t x{:.4} \t counted {}",
+                time1,
+                time2,
+                time1.as_secs_f32() / time2.as_secs_f32(),
+                count
+            );
+            info.reader_done()
+        });
+        info.iteration_done()
+    }
 }

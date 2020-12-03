@@ -24,30 +24,32 @@ pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
 
 pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
-pub const CPU_CORES_PERCENT: f64 = 0.5;
 
 fn main() {
     rayon::ThreadPoolBuilder::new()
-        .num_threads((num_cpus::get() as f64 * CPU_CORES_PERCENT) as usize)
+        .thread_name(|i| format!("rayon thread {}", i))
         .build_global()
         .unwrap();
 
     // read all paths recursively, ignoring errors
     println!("OPENING FILES");
-    let readers = open_readers();
+    let readers;
+    println!("DONE IN {:?}", time!({ readers = open_readers() }));
+
+    print!("\n\n\n");
 
     // go thru every sample of every file and add it to the result
     println!("SUMMING FILES");
     let mut result = AudioResult::new();
     // pause();
-    time!({ sum(&mut result, readers) });
+    println!("DONE IN {:?}", time!({ sum(&mut result, readers) }));
     // pause();
+
+    print!("\n\n\n");
 
     // save the result
     println!("SAVING RESULT");
-    result.save();
-
-    println!("DONE!");
+    println!("DONE IN {:?}", time!({ result.save() }));
 }
 
 fn open_readers() -> Vec<AudioReader> {
@@ -63,7 +65,7 @@ fn open_readers() -> Vec<AudioReader> {
                 None
             }
         })
-        .flat_map(|reader| (0..10).map(move |_| reader.clone())) // artificial lengthening
+        // .flat_map(|reader| (0..10).map(move |_| reader.clone())) // artificial lengthening
         .collect()
 }
 
@@ -71,6 +73,9 @@ fn sum(result: &mut AudioResult, readers: Vec<AudioReader>) {
     let info = PollInfo::new(readers.len());
     rayon::join(
         || poll_job(&info),
-        || Strategy3::execute(result, readers, &info),
+        || {
+            Strategy4::execute(result, readers, &info);
+            info.done();
+        },
     );
 }

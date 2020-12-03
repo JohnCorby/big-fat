@@ -1,11 +1,12 @@
 use crate::POLL_DELAY;
 use std::fmt::{Display, Formatter, Result};
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::Ordering::*;
+use std::sync::atomic::{AtomicBool, AtomicUsize};
 
 pub struct PollInfo {
     readers_left: AtomicUsize,
     iterations_done: AtomicUsize,
+    is_done: AtomicBool,
 }
 
 impl PollInfo {
@@ -13,6 +14,7 @@ impl PollInfo {
         Self {
             readers_left: AtomicUsize::new(num_readers),
             iterations_done: Default::default(),
+            is_done: Default::default(),
         }
     }
     pub fn reader_done(&self) {
@@ -20,6 +22,9 @@ impl PollInfo {
     }
     pub fn iteration_done(&self) {
         self.iterations_done.fetch_add(1, Relaxed);
+    }
+    pub fn done(&self) {
+        self.is_done.store(true, Relaxed);
     }
 }
 
@@ -34,7 +39,7 @@ impl Display for PollInfo {
 }
 
 pub fn poll_job(info: &PollInfo) {
-    while info.readers_left.load(Relaxed) > 0 {
+    while !info.is_done.load(Relaxed) {
         println!("{}", info);
         std::thread::sleep(POLL_DELAY);
     }
