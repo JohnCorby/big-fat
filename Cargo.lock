@@ -89,6 +89,7 @@ name = "big-fat"
 version = "0.1.0"
 dependencies = [
  "hound",
+ "num_cpus",
  "rayon",
  "rodio",
  "walkdir",

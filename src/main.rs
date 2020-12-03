@@ -24,8 +24,14 @@ pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
 
 pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
+pub const CPU_CORES_PERCENT: f64 = 0.5;
 
 fn main() {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads((num_cpus::get() as f64 * CPU_CORES_PERCENT) as usize)
+        .build_global()
+        .unwrap();
+
     // read all paths recursively, ignoring errors
     println!("OPENING FILES");
     let readers = open_readers();
@@ -57,7 +63,7 @@ fn open_readers() -> Vec<AudioReader> {
                 None
             }
         })
-        // .flat_map(|reader| (0..10).map(move |_| reader.clone())) // artificial lengthening
+        .flat_map(|reader| (0..10).map(move |_| reader.clone())) // artificial lengthening
         .collect()
 }
 

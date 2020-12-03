@@ -67,6 +67,7 @@ impl Strategy for Strategy2 {
 pub struct Strategy3;
 impl Strategy for Strategy3 {
     fn execute(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
+        /// ive tuned this and this number seems to be fastest
         const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 
         while !readers.is_empty() {
