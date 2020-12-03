@@ -30,15 +30,15 @@ pub fn file_name(path: &Path) -> &str {
 }
 
 /// for some reason, clion doesnt get the return type of into_par_iter. this is a workaround
-pub fn par_iter<Items: IntoParallelIterator>(items: Items) -> Items::Iter {
+pub fn par_iter<I: IntoParallelIterator>(items: I) -> I::Iter {
     items.into_par_iter()
 }
 
-pub fn par_fold<Items: IntoParallelIterator, Result: Send>(
-    items: Items,
-    init: impl Fn() -> Result + Send + Sync + Copy,
-    fold: impl Fn(Result, Items::Item) -> Result + Send + Sync,
-    reduce: impl Fn(Result, Result) -> Result + Send + Sync,
-) -> Result {
+pub fn par_fold<I: IntoParallelIterator, R: Send>(
+    items: I,
+    init: impl Fn() -> R + Send + Sync + Copy,
+    fold: impl Fn(R, I::Item) -> R + Send + Sync,
+    reduce: impl Fn(R, R) -> R + Send + Sync,
+) -> R {
     par_iter(items).fold(init, fold).reduce(init, reduce)
 }

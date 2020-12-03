@@ -74,7 +74,7 @@ fn sum(result: &mut AudioResult, readers: Vec<AudioReader>) {
     rayon::join(
         || poll_job(&info),
         || {
-            Strategy4::execute(result, readers, &info);
+            Strategy3::execute(result, readers, &info);
             info.done();
         },
     );
