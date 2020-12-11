@@ -33,12 +33,3 @@ pub fn file_name(path: &Path) -> &str {
 pub fn par_iter<I: IntoParallelIterator>(items: I) -> I::Iter {
     items.into_par_iter()
 }
-
-pub fn par_fold<I: IntoParallelIterator, R: Send>(
-    items: I,
-    init: impl Fn() -> R + Send + Sync + Copy,
-    fold: impl Fn(R, I::Item) -> R + Send + Sync,
-    reduce: impl Fn(R, R) -> R + Send + Sync,
-) -> R {
-    par_iter(items).fold(init, fold).reduce(init, reduce)
-}

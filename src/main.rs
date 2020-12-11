@@ -4,13 +4,12 @@
 mod audio_reader;
 mod audio_result;
 mod poll_info;
-mod strategy;
 mod util;
 
 use crate::poll_info::{poll_job, PollInfo};
-use crate::strategy::*;
 use audio_reader::AudioReader;
 use audio_result::AudioResult;
+use rayon::prelude::*;
 use std::time::Duration;
 use util::*;
 use walkdir::WalkDir;
@@ -24,6 +23,8 @@ pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
 
 pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
+/// ive tuned this and this number seems to be fastest
+const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 
 fn main() {
     rayon::ThreadPoolBuilder::new()
@@ -74,8 +75,37 @@ fn sum(result: &mut AudioResult, readers: Vec<AudioReader>) {
     rayon::join(
         || poll_job(&info),
         || {
-            Strategy3::execute(result, readers, &info);
+            sum_job(result, readers, &info);
             info.done();
         },
     );
+}
+
+fn sum_job(result: &mut AudioResult, mut readers: Vec<AudioReader>, info: &PollInfo) {
+    while !readers.is_empty() {
+        // read and sum
+        let chunk = par_iter(&mut readers)
+            .map(|reader| reader.take(CHUNK_SIZE).collect())
+            .reduce(
+                || vec![0.0; CHUNK_SIZE],
+                |a: Vec<f32>, b: Vec<f32>| {
+                    a.into_iter()
+                        .zip(b.into_iter())
+                        .map(|(a, b)| a + b)
+                        .collect()
+                },
+            );
+
+        // write to result
+        for sample in chunk {
+            result.write(sample);
+        }
+
+        // remove done
+        readers
+            .drain_filter(|reader| reader.at_eof())
+            .for_each(|_| info.reader_done());
+
+        info.iteration_done();
+    }
 }
