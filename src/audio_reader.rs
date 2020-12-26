@@ -54,6 +54,7 @@ impl Iterator for AudioReader {
     }
 }
 
+/// todo unnecessary and shit
 impl Clone for AudioReader {
     fn clone(&self) -> Self {
         Self::open(&self.path).unwrap()

@@ -35,6 +35,7 @@ impl AudioResult {
     }
 }
 
+/// todo unnecessary and shit
 impl Clone for AudioResult {
     fn clone(&self) -> Self {
         Self::new()
