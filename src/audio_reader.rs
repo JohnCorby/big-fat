@@ -54,13 +54,6 @@ impl Iterator for AudioReader {
     }
 }
 
-/// todo unnecessary and shit
-impl Clone for AudioReader {
-    fn clone(&self) -> Self {
-        Self::open(&self.path).unwrap()
-    }
-}
-
 impl Debug for AudioReader {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AudioReader")

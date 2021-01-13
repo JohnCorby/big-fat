@@ -1,23 +1,22 @@
 #![feature(drain_filter)]
+#![feature(once_cell)]
 #![allow(dead_code)]
 
 mod audio_reader;
 mod audio_result;
+mod cli;
+mod late_init;
 mod poll_info;
 mod util;
 
-use crate::poll_info::{poll_job, PollInfo};
 use audio_reader::AudioReader;
 use audio_result::AudioResult;
+use cli::IN_DIR;
+use poll_info::{poll_job, PollInfo};
 use rayon::prelude::*;
 use std::time::Duration;
 use util::*;
 use walkdir::WalkDir;
-
-// config
-const IN_DIR: &str =
-    r"D:\OneDrive - Lake Washington School District\Everything Else\gay\sound is gay";
-pub const OUT_FILE: &str = r".\bruh.wav";
 
 pub const CHANNELS: u16 = 2;
 pub const SAMPLE_RATE: u32 = 44100;
@@ -27,6 +26,8 @@ pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
 const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 
 fn main() {
+    cli::parse();
+
     rayon::ThreadPoolBuilder::new()
         .thread_name(|i| format!("rayon thread {}", i))
         .build_global()
@@ -54,7 +55,7 @@ fn main() {
 }
 
 fn open_readers() -> Vec<AudioReader> {
-    WalkDir::new(IN_DIR)
+    WalkDir::new(&*IN_DIR)
         .into_iter()
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.into_path())
@@ -66,7 +67,6 @@ fn open_readers() -> Vec<AudioReader> {
                 None
             }
         })
-        // .flat_map(|reader| (0..10).map(move |_| reader.clone())) // artificial lengthening
         .collect()
 }
 
