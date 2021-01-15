@@ -21,5 +21,7 @@ pub fn parse() {
         .get_matches();
 
     IN_DIR.init(matches.value_of("in dir").unwrap().into());
+    assert!(IN_DIR.exists(), "in dir doesnt exist");
+    assert!(IN_DIR.is_dir(), "in dir must be a directory");
     OUT_FILE.init(matches.value_of("out file").unwrap().into());
 }

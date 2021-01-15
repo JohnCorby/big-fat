@@ -1,5 +1,6 @@
 #![feature(drain_filter)]
 #![feature(once_cell)]
+#![feature(panic_info_message)]
 #![allow(dead_code)]
 
 mod audio_reader;
@@ -26,12 +27,19 @@ pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
 const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 
 fn main() {
-    cli::parse();
+    // nicer error messages
+    std::panic::set_hook(Box::new(|info| {
+        let error = if let Some(&message) = info.message() {
+            format!("{}", message)
+        } else if let Some(&payload) = info.payload().downcast_ref::<&'static str>() {
+            payload.to_string()
+        } else {
+            "[unknown error]".to_string()
+        };
+        println!("error: {}", error);
+    }));
 
-    rayon::ThreadPoolBuilder::new()
-        .thread_name(|i| format!("rayon thread {}", i))
-        .build_global()
-        .unwrap();
+    cli::parse();
 
     // read all paths recursively, ignoring errors
     println!("OPENING FILES");
