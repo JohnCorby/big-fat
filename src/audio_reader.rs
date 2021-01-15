@@ -21,7 +21,9 @@ impl AudioReader {
         let reader = BufReader::new(file);
         let decoder =
             Decoder::new(reader).map_err(|e| format!("error constructing decoder: {}", e))?;
-        let iter = UniformSourceIterator::new(decoder, CHANNELS, SAMPLE_RATE);
+
+        let channels = decoder.channels();
+        let iter = UniformSourceIterator::new(decoder, channels, SAMPLE_RATE);
 
         try_assert!(
             iter.channels() == CHANNELS,
