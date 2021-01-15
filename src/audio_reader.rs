@@ -1,14 +1,14 @@
 //! thingy for reading audio files
 
 use crate::*;
-use rodio::source::SamplesConverter;
+use rodio::source::UniformSourceIterator;
 use rodio::{Decoder, Source};
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
-type Iter = SamplesConverter<Decoder<BufReader<File>>, f32>;
+type Iter = UniformSourceIterator<Decoder<BufReader<File>>, f32>;
 pub struct AudioReader {
     iter: Iter,
     at_eof: bool,
@@ -17,11 +17,11 @@ pub struct AudioReader {
 
 impl AudioReader {
     pub fn open(path: &Path) -> Result<Self, String> {
-        let file = File::open(&path).map_err(|e| format!("error opening file {}", e))?;
+        let file = File::open(&path).map_err(|e| format!("error opening file: {}", e))?;
         let reader = BufReader::new(file);
         let decoder =
             Decoder::new(reader).map_err(|e| format!("error constructing decoder: {}", e))?;
-        let iter = decoder.convert_samples();
+        let iter = UniformSourceIterator::new(decoder, CHANNELS, SAMPLE_RATE);
 
         try_assert!(
             iter.channels() == CHANNELS,
