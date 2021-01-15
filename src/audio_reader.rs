@@ -17,20 +17,23 @@ pub struct AudioReader {
 
 impl AudioReader {
     pub fn open(path: &Path) -> Result<Self, String> {
-        let file = File::open(&path).map_err(|_| "error opening file")?;
+        let file = File::open(&path).map_err(|e| format!("error opening file {}", e))?;
         let reader = BufReader::new(file);
-        let decoder = Decoder::new(reader).map_err(|_| "error constructing decoder")?;
+        let decoder =
+            Decoder::new(reader).map_err(|e| format!("error constructing decoder: {}", e))?;
         let iter = decoder.convert_samples();
 
         try_assert!(
             iter.channels() == CHANNELS,
-            "must have {} channels",
-            CHANNELS
+            "must have {} channels (instead of {})",
+            CHANNELS,
+            iter.channels()
         );
         try_assert!(
             iter.sample_rate() == SAMPLE_RATE,
-            "must have sample rate of {}",
-            SAMPLE_RATE
+            "must have sample rate of {} (instead of {})",
+            SAMPLE_RATE,
+            iter.sample_rate()
         );
 
         Ok(Self {

@@ -20,8 +20,12 @@ pub fn parse() {
         )
         .get_matches();
 
-    IN_DIR.init(matches.value_of("in dir").unwrap().into());
-    assert!(IN_DIR.exists(), "in dir doesnt exist");
-    assert!(IN_DIR.is_dir(), "in dir must be a directory");
-    OUT_FILE.init(matches.value_of("out file").unwrap().into());
+    let in_dir: PathBuf = matches.value_of("in dir").unwrap().into();
+    assert!(in_dir.exists(), "in dir doesnt exist");
+    assert!(in_dir.is_dir(), "in dir must be a directory");
+    IN_DIR.init(in_dir);
+
+    let mut out_file: PathBuf = matches.value_of("out file").unwrap().into();
+    out_file = out_file.with_extension("wav");
+    OUT_FILE.init(out_file);
 }

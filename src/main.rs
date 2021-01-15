@@ -63,19 +63,28 @@ fn main() {
 }
 
 fn open_readers() -> Vec<AudioReader> {
-    WalkDir::new(&*IN_DIR)
+    let mut good = 0usize;
+    let mut total = 0usize;
+    let readers = WalkDir::new(&*IN_DIR)
         .into_iter()
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.into_path())
         .filter(|path| path.is_file())
+        .filter(|path| matches!(file_extension(&path), "wav" | "flac" | "mp3" | "ogg"))
+        .inspect(|_| total += 1)
         .filter_map(|path| match AudioReader::open(&path) {
-            Ok(reader) => Some(reader),
+            Ok(reader) => {
+                good += 1;
+                Some(reader)
+            }
             Err(err) => {
-                println!("error opening {}: {:?}", file_name(&path), err);
+                println!("error opening {}: {}", file_name(&path), err);
                 None
             }
         })
-        .collect()
+        .collect();
+    println!("opened {} out of {} readers", good, total);
+    readers
 }
 
 fn sum(result: &mut AudioResult, readers: Vec<AudioReader>) {
