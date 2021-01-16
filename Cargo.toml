@@ -7,9 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-walkdir = "2.3.1"
-rodio = "0.13.0"
-hound = "3.4.0"
-rayon = "1.5.0"
-num_cpus = "1.13.0"
-clap = "2.33.3"
+walkdir = "*"
+rodio = "*"
+hound = "*"
+rayon = "*"
+num_cpus = "*"
+clap = "*"
