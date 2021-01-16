@@ -1,4 +1,4 @@
-use crate::POLL_DELAY;
+use crate::cli::POLL_DELAY;
 use std::fmt::{Display, Formatter, Result};
 use std::sync::atomic::Ordering::*;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
@@ -41,6 +41,6 @@ impl Display for PollInfo {
 pub fn poll_job(info: &PollInfo) {
     while !info.is_done.load(Relaxed) {
         println!("{}", info);
-        std::thread::sleep(POLL_DELAY);
+        std::thread::sleep(*POLL_DELAY);
     }
 }

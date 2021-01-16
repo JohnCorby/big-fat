@@ -12,19 +12,11 @@ mod util;
 
 use audio_reader::AudioReader;
 use audio_result::AudioResult;
-use cli::IN_DIR;
+use cli::*;
 use poll_info::{poll_job, PollInfo};
 use rayon::prelude::*;
-use std::time::Duration;
 use util::*;
 use walkdir::WalkDir;
-
-pub const CHANNELS: u16 = 2;
-pub const SAMPLE_RATE: u32 = 44100;
-
-pub const POLL_DELAY: Duration = Duration::from_millis(1000 / 3);
-/// ive tuned this and this number seems to be fastest
-const CHUNK_SIZE: usize = (1e5 as usize).next_power_of_two();
 
 fn main() {
     // nicer error messages
@@ -65,10 +57,25 @@ fn main() {
 fn open_readers() -> Vec<AudioReader> {
     let mut good = 0usize;
     let mut total = 0usize;
-    let readers = WalkDir::new(&*IN_DIR)
+
+    // rip this ugliness but it sometimes gotta be like that
+    let files: Vec<_> = if *RECURSE {
+        WalkDir::new(&*IN_DIR)
+            .into_iter()
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.into_path())
+            .collect()
+    } else {
+        (&*IN_DIR)
+            .read_dir()
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .collect()
+    };
+
+    let readers = files
         .into_iter()
-        .filter_map(|entry| entry.ok())
-        .map(|entry| entry.into_path())
         .filter(|path| path.is_file())
         .filter(|path| matches!(file_extension(&path), "wav" | "flac" | "mp3" | "ogg"))
         .inspect(|_| total += 1)

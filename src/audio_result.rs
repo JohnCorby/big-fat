@@ -1,11 +1,13 @@
 //! thingy for storing the sum of the audio files
 
-use crate::cli::OUT_FILE;
-use crate::*;
-use hound::{SampleFormat, WavSpec, WavWriter};
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io::BufWriter;
+
+use hound::{SampleFormat, WavSpec, WavWriter};
+
+use crate::cli::{CHANNELS, OUT_FILE, SAMPLE_RATE};
+use crate::*;
 
 type Writer = WavWriter<BufWriter<File>>;
 pub struct AudioResult {
@@ -15,8 +17,8 @@ pub struct AudioResult {
 impl AudioResult {
     pub fn new() -> Self {
         let spec = WavSpec {
-            channels: CHANNELS,
-            sample_rate: SAMPLE_RATE,
+            channels: *CHANNELS,
+            sample_rate: *SAMPLE_RATE,
             bits_per_sample: 32,
             sample_format: SampleFormat::Float,
         };
