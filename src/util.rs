@@ -26,10 +26,10 @@ pub fn pause() {
 }
 
 pub fn file_name(path: &Path) -> &str {
-    path.file_name().unwrap().to_str().unwrap()
+    path.file_name().unwrap_or_default().to_str().unwrap()
 }
 pub fn file_extension(path: &Path) -> &str {
-    path.extension().unwrap().to_str().unwrap()
+    path.extension().unwrap_or_default().to_str().unwrap()
 }
 
 /// for some reason, clion doesnt get the return type of into_par_iter. this is a workaround
